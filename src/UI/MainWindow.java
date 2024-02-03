@@ -57,10 +57,16 @@ public class MainWindow extends JFrame {
 	}
 
 	private void exibirInformacoesProfessor(List<String> materias) {
+		int gridSize = materias.size();
+
+		if(gridSize < 2){
+			gridSize = 2;
+		}
+
 		getContentPane().removeAll(); // Remove existing components
 		panel = new JPanel();
-		panel.setLayout(new GridLayout(materias.size() + 2, 2)); // Plus 2 for labels in the first two rows
-		panel.setBounds(39, 50, 300, materias.size() * 30);
+		panel.setLayout(new GridLayout(gridSize + 2, 2)); // Plus 2 for labels in the first two rows
+		panel.setBounds(39, 50, 300, gridSize * 30);
 		getContentPane().add(panel);
 	
 		JLabel lblNewLabel = new JLabel("Bem-vindo, " + nomeUsuario + "!");
@@ -68,12 +74,17 @@ public class MainWindow extends JFrame {
 	
 		JLabel emptyLabel = new JLabel(); // Empty label for layout
 		panel.add(emptyLabel);
-	
-		JLabel lblMateriaHeader = new JLabel("Materia");
-		panel.add(lblMateriaHeader);
-	
-		JLabel lblAcaoHeader = new JLabel("Ação");
-		panel.add(lblAcaoHeader);
+
+		if(materias.size() > 0){
+			JLabel lblMateriaHeader = new JLabel("Materia");
+			panel.add(lblMateriaHeader);
+		
+			JLabel lblAcaoHeader = new JLabel("Ação");
+			panel.add(lblAcaoHeader);
+		}else{
+			JLabel lblNoMateriaHeader = new JLabel("Professor sem materias no sistema");
+			panel.add(lblNoMateriaHeader);
+		}
 	
 		for (String materia : materias) {
 			JLabel lblMateria = new JLabel(materia);
