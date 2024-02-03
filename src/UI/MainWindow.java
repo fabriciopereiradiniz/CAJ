@@ -66,8 +66,8 @@ public class MainWindow extends JFrame {
 		
 		getContentPane().removeAll(); // Remove existing components
 		panel = new JPanel();
-		panel.setLayout(new GridLayout(materias.size() + 2, 2)); // Plus 2 for labels in the first two rows
-		panel.setBounds(39, 50, 300, materias.size() * 30);
+		panel.setLayout(new GridLayout(gridSize + 2, 2)); // Plus 2 for labels in the first two rows
+		panel.setBounds(39, 50, 300, gridSize * 30);
 		getContentPane().add(panel);
 	
 		JLabel lblNewLabel = new JLabel("Bem-vindo, " + nomeUsuario + "!");
