@@ -63,7 +63,6 @@ public class MainWindow extends JFrame {
 		if(gridSize < 2) {
 			gridSize = 2;	
 		}
-		
 		getContentPane().removeAll(); // Remove existing components
 		panel = new JPanel();
 		panel.setLayout(new GridLayout(gridSize + 2, 2)); // Plus 2 for labels in the first two rows
@@ -77,6 +76,7 @@ public class MainWindow extends JFrame {
 		panel.add(emptyLabel);
 
 		if(materias.size() > 0){
+<<<<<<< HEAD
 
 			JLabel lblMateriaHeader = new JLabel("Materia");
 			panel.add(lblMateriaHeader);
@@ -85,6 +85,15 @@ public class MainWindow extends JFrame {
 			panel.add(lblAcaoHeader);
 		}else{
 			JLabel lblNoMateriaHeader = new JLabel("Professor sem materia no sistema");
+=======
+			JLabel lblMateriaHeader = new JLabel("Materia");
+			panel.add(lblMateriaHeader);
+		
+			JLabel lblAcaoHeader = new JLabel("Ação");
+			panel.add(lblAcaoHeader);
+		}else{
+			JLabel lblNoMateriaHeader = new JLabel("Professor sem materias no sistema");
+>>>>>>> 4cbffe990afae20aa17990f698468ea590f671f4
 			panel.add(lblNoMateriaHeader);
 		}
 	
