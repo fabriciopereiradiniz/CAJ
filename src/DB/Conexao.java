@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Conexao {
 	public String loginAutenticado; // Variável pública para armazenar o login autenticado
@@ -16,14 +18,16 @@ public class Conexao {
 	private String user;
 	private String password;
 	private Connection con;
+	private Map<Integer, List<String>> notificacoes;
 
 	public Conexao() throws ClassNotFoundException, SQLException {
-		databaseURL = "jdbc:postgresql://localhost:5432/users";
+		databaseURL = "jdbc:postgresql://localhost:2121/users"; //mudar a porta 
 		user = "postgres";
 		password = "postgres";
 		Class.forName("org.postgresql.Driver");
 		con = DriverManager.getConnection(databaseURL, user, password);
-
+		notificacoes = new HashMap<>();
+		
 		System.out.println("Conexão realizada com sucesso.");
 	}
 
@@ -259,6 +263,20 @@ public class Conexao {
         }
     }
 
+	public int obterIdAluno(String nome) throws SQLException {
+    	String idAlunoQuery = "SELECT id_aluno FROM aluno WHERE name =?";
+    	try (PreparedStatement stmt = con.prepareStatement(idAlunoQuery)) {
+        	stmt.setString(1, nome);
+        	ResultSet resultSet = stmt.executeQuery();
+        	if (resultSet.next()) {
+            	return resultSet.getInt(1);
+        	}
+    	} catch (SQLException e) {
+        	e.printStackTrace();
+        	// Handle SQLException appropriately
+    	}
+		return 0;
+	}
 	public int obteIdMateriaPorNome(String materiaName) throws SQLException {
 		String idMateriaQuery = "SELECT id_materia FROM materia WHERE nome_materia = ?";
 
@@ -324,8 +342,11 @@ public class Conexao {
 			stmt.setDouble(6, finalExam);
 			stmt.setInt(7, idAluno);
 			stmt.setInt(8, idMateria);
+			
+			inserirNotificacao(idAluno, idMateria);
 	
 			stmt.executeUpdate();
+			
 		}
 	}
 
@@ -347,6 +368,44 @@ public class Conexao {
 				return null; // No professor found for the given materia
 			}
 		}
+	}
+	
+	public void inserirNotificacao(int idAluno, int idMateria) throws SQLException {
+		String materia;
+		materia = obterNomeMateriaPorId(idMateria);
+        notificacoes.computeIfAbsent(idAluno, k -> new ArrayList<>()).add(materia);
+    }
+
+    private String obterNomeMateriaPorId(int idMateria) {
+		String sql = "SELECT nome_materia FROM materia WHERE id_materia =?";
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idMateria);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getString("nome_materia");
+            }
+        } catch (SQLException e) {
+			e.printStackTrace();
+        }
+		// Handle SQLException appropriately
+		return null;
+	}
+
+	public List<String> obterNotificacoesNaoLidas(int idAluno) {
+        List<String> notificacoesDoAluno = notificacoes.getOrDefault(idAluno, new ArrayList<>());
+        notificacoes.remove(idAluno);
+        return notificacoesDoAluno;
+    }
+
+	public Boolean notificacaoIsTrue(String nome) throws SQLException{
+		int id = obterIdAluno(nome);
+		List<String> notificacoes = obterNotificacoesNaoLidas(id);
+		if(notificacoes.size() > 0) {
+			return true;
+		}else{
+			return false;
+		}
+
 	}
 
 }

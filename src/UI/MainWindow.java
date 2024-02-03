@@ -57,6 +57,13 @@ public class MainWindow extends JFrame {
 	}
 
 	private void exibirInformacoesProfessor(List<String> materias) {
+		int gridSize = materias.size();
+		System.out.println(gridSize);
+
+		if(gridSize < 2) {
+			gridSize = 2;	
+		}
+		
 		getContentPane().removeAll(); // Remove existing components
 		panel = new JPanel();
 		panel.setLayout(new GridLayout(materias.size() + 2, 2)); // Plus 2 for labels in the first two rows
@@ -68,12 +75,18 @@ public class MainWindow extends JFrame {
 	
 		JLabel emptyLabel = new JLabel(); // Empty label for layout
 		panel.add(emptyLabel);
-	
-		JLabel lblMateriaHeader = new JLabel("Materia");
-		panel.add(lblMateriaHeader);
-	
-		JLabel lblAcaoHeader = new JLabel("Ação");
-		panel.add(lblAcaoHeader);
+
+		if(materias.size() > 0){
+
+			JLabel lblMateriaHeader = new JLabel("Materia");
+			panel.add(lblMateriaHeader);
+			
+			JLabel lblAcaoHeader = new JLabel("Ação");
+			panel.add(lblAcaoHeader);
+		}else{
+			JLabel lblNoMateriaHeader = new JLabel("Professor sem materia no sistema");
+			panel.add(lblNoMateriaHeader);
+		}
 	
 		for (String materia : materias) {
 			JLabel lblMateria = new JLabel(materia);
@@ -148,14 +161,21 @@ public class MainWindow extends JFrame {
 	}
 	
 
-	private void exibirInformacoesAluno(List<String> materias) {
+	private void exibirInformacoesAluno(List<String> materias) throws SQLException {
 		getContentPane().removeAll(); // Remove existing components
 
 		// Create a welcome label
 		JLabel lblWelcome = new JLabel("Bem-vindo, " + nomeUsuario + "!");
 		lblWelcome.setBounds(39, 50, 300, 20);
 		getContentPane().add(lblWelcome);
-	
+
+		//if (conexao.notificacaoIsTrue(nomeUsuario)){
+			JPopupMenu popupNotification = new JPopupMenu("Suas informações foram atualizadas!");
+    		popupNotification.setForeground(Color.RED); // Set color to red for emphasis
+    		popupNotification.setBounds(39, 80, 400, 20);
+    		getContentPane().add(popupNotification);
+		//}**/
+
 		// Create table with headers
 		String[] columnHeaders = {"ID", "Matéria", "Faltas", "1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre", "Exame"};
 		tableModel = new DefaultTableModel(columnHeaders, 0) {
@@ -169,28 +189,41 @@ public class MainWindow extends JFrame {
 		scrollPane.setBounds(39, 100, 700, 400);
 		getContentPane().add(scrollPane);
 
+		
+
 		// Populate table with student information
 		try {
 			for (String materia : materias) {
 				int idMateriaAtual = conexao.obteIdMateriaPorNome(materia);
 				List<Object> alunoInfo = conexao.obterAlunoInfoPorId(conexao.idAluno, idMateriaAtual);
-
+				
 				// Add student information to the table model
 				Object[] rowData = new Object[8];
 				System.out.println(rowData[0]);
-
+				
 				for (int i = 0; i <= 7; i++) {
 					rowData[i] = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
 				}
 				rowData[1] = materia;
 				tableModel.addRow(rowData);
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		if (conexao.notificacaoIsTrue(nomeUsuario)) {
+			int id = (conexao.obterIdAluno(nomeUsuario));
+			List<String> nome_materias =conexao.obterNotificacoesNaoLidas(id);
+			String concatenatedString = "";
+			for (int i = 0; i < nome_materias.size(); i++) {
+    			concatenatedString += nome_materias.get(i) +", ";
+			}
+			exibirPopup("A(s) Matéria(s) " + concatenatedString + " sofreram alteração");
+		}
 	
 		/* revalidate();
 		repaint(); */
+		
 	}
 	
 	
@@ -280,6 +313,13 @@ public class MainWindow extends JFrame {
 				double grade3 = parseValue(table.getValueAt(table.getSelectedRow(), 5));
 				double grade4 = parseValue(table.getValueAt(table.getSelectedRow(), 6));
 				double finalExam = parseValue(table.getValueAt(table.getSelectedRow(), 7));
+
+				try {
+					conexao.inserirNotificacao(idAluno,idSelectedMateria);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	
 				try {
 					conexao.atualizarInfoAluno(idAluno, idSelectedMateria, faltas, grade1, grade2, grade3, grade4, finalExam);
@@ -298,6 +338,41 @@ public class MainWindow extends JFrame {
 			return (value == null) ? Double.NaN : Double.parseDouble(value.toString());
 		}
 	}
+
+	private void exibirPopup(String mensagem) {
+		JFrame popupFrame = new JFrame();
+		popupFrame.setUndecorated(true);  // Remove a barra de título e borda
+		popupFrame.setBackground(new Color(0, 0, 0, 0));  // Define o fundo como transparente
 	
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBackground(Color.WHITE);  // Cor de fundo do painel flutuante
+		panel.setBorder(BorderFactory.createLineBorder(Color.lightGray, 5));  // Borda do painel
+		panel.setPreferredSize(new Dimension(300, 150));  // Define o tamanho do painel
+		panel.setLayout(new BorderLayout());
+	
+		JLabel label = new JLabel(mensagem);
+		label.setHorizontalAlignment(JLabel.CENTER);  // Centraliza o texto
+		Font fontePersonalizada = new Font("Arial Black", Font.PLAIN, 10);
+		label.setFont(fontePersonalizada);
+	
+		panel.add(label, BorderLayout.CENTER);
+		popupFrame.add(panel);
+	
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int x = screenSize.width - panel.getPreferredSize().width - 600;  // Ajuste o 20 conforme necessário
+		int y = screenSize.height - panel.getPreferredSize().height - 200;  // Ajuste o 20 conforme necessário
+		popupFrame.setLocation(x, y);
+	
+		popupFrame.setSize(panel.getPreferredSize());
+		popupFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	
+		// Defina um temporizador para fechar automaticamente após alguns segundos
+		Timer timer = new Timer(5000, e -> popupFrame.dispose());  // 5000 milissegundos (5 segundos)
+		timer.setRepeats(false);  // Execute apenas uma vez
+		timer.start();
+	
+		popupFrame.setAlwaysOnTop(true);
+		popupFrame.setVisible(true);
+	}
 
 }
