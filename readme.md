@@ -1,5 +1,18 @@
-Avisos: utilizar postgre nas dependencias, tenha tudo instalado do postgres e do java swing
+# Controle de alunos em Java (CAJ)
 
-Para implementar:
-- Ao inves de ter uma tela unica fazer um if para abrir um tela se for professor e outra se for aluno ( fica mais fácil e nao tem que ficar escondendo os itens )
-- Implementar janela professor e aluno ( professor = atribuicao de nota conforme as materias que ele tem na DB e aluno ver as notas conforme as materias que ele tem na DB )
+| ![instruction_process](https://i.imgur.com/1jZRPKp.gif) | Este projeto foi realizado para a matéria de "Programação orientada a objetos", caso queira ver a representação de classes UML clique [aqui](./relatorio.pdf). |
+|---|---|
+
+## Compilação e execucação do programa
+
+<div align="left">
+  É importante ressaltar que para que a execução do progarma funcione é necessário o Java Development Kit (JDK), além disso será necessário criar as tabelas fictícias que o programa necessita para pleno funcionamento, caso queira rodar em sua máquina utilizando sua database recomenda-se ler o arquivo `conexao.java` pois nele é possível visualizar todos os queries feitos durante a execução.
+
+Se possível será feito um upload de instalador do programa em breve!
+
+</div>
+
+<div align="right">
+  <img src="https://i.imgur.com/wu5eh6H.gif" alt="java" width="150">
+</div>
+
