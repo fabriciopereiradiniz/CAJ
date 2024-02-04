@@ -28,7 +28,6 @@ public class RegisterWindow {
 
 	public RegisterWindow(Conexao conexao) {
 		initialize();
-
 		try {
 			File fontFileUsuarioSenha = new File("src\\SFUIText-Light.otf");
 			Font customFontUsuarioSenha = Font.createFont(Font.TRUETYPE_FONT, fontFileUsuarioSenha);
@@ -96,7 +95,7 @@ public class RegisterWindow {
 	private void initialize() {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 450, 300);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		frame.getContentPane().setBackground(Color.WHITE);
 	}

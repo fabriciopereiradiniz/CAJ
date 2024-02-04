@@ -21,7 +21,7 @@ public class Conexao {
 	private Map<Integer, List<String>> notificacoes;
 
 	public Conexao() throws ClassNotFoundException, SQLException {
-		databaseURL = "jdbc:postgresql://localhost:2121/users"; //mudar a porta 
+		databaseURL = "jdbc:postgresql://localhost:5432/users"; //mudar a porta 
 		user = "postgres";
 		password = "postgres";
 		Class.forName("org.postgresql.Driver");
