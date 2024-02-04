@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Conexao {
-	public String loginAutenticado; // Variável pública para armazenar o login autenticado
-	public int idAluno; // Variável pública para armazenar o login autenticado
+	public String loginAutenticado; // Variavel pública para armazenar o login autenticado
+	public int idAluno; // Variavel pública para armazenar o login autenticado
 	private String databaseURL;
 	private String user;
 	private String password;
@@ -21,95 +21,85 @@ public class Conexao {
 	private Map<Integer, List<String>> notificacoes;
 
 	public Conexao() throws ClassNotFoundException, SQLException {
-		databaseURL = "jdbc:postgresql://localhost:5432/users"; //mudar a porta 
+		databaseURL = "jdbc:postgresql://localhost:5432/users";
 		user = "postgres";
 		password = "postgres";
 		Class.forName("org.postgresql.Driver");
 		con = DriverManager.getConnection(databaseURL, user, password);
 		notificacoes = new HashMap<>();
-		
-		System.out.println("Conexão realizada com sucesso.");
+
+		System.out.println("Conexao realizada com sucesso.");
 	}
 
-/* 	public boolean autenticarUsuario(String usuario, String senha) throws SQLException {
-		String sql = "SELECT * FROM aluno WHERE login = ? AND password = ? " + "UNION "
-				+ "SELECT * FROM professor WHERE login = ? AND password = ?";
-
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, usuario);
-			stmt.setString(2, senha);
-			stmt.setString(3, usuario);
-			stmt.setString(4, senha);
-
-			ResultSet resultSet = stmt.executeQuery();
-			if (resultSet.next()) {
-				loginAutenticado = usuario; // Armazena o login autenticado na variável pública
-				return true;
-			} else {
-				return false;
-			}
-		}
-	} */
-
 	public boolean autenticarUsuario(String usuario, String senha) throws SQLException {
-		// Query for aluno table
 		String alunoQuery = "SELECT * FROM aluno WHERE login = ? AND password = ?";
-		
-		// Query for professor table
 		String professorQuery = "SELECT * FROM professor WHERE login = ? AND password = ?";
+		String administradorQuery = "SELECT * FROM administrador WHERE login = ? AND password = ?";
 		
 		try {
-			// Try aluno query first
 			try (PreparedStatement stmt = con.prepareStatement(alunoQuery)) {
 				stmt.setString(1, usuario);
 				stmt.setString(2, senha);
 				ResultSet resultSet = stmt.executeQuery();
 				if (resultSet.next()) {
-					loginAutenticado = usuario; // Store the authenticated login in the public variable
+					loginAutenticado = usuario;
 					idAluno = resultSet.getInt("id_aluno");
 					return true;
 				}
 			}
 			
-			// If aluno query didn't authenticate, try professor query
 			try (PreparedStatement stmt = con.prepareStatement(professorQuery)) {
 				stmt.setString(1, usuario);
 				stmt.setString(2, senha);
 				ResultSet resultSet = stmt.executeQuery();
 				if (resultSet.next()) {
-					loginAutenticado = usuario; // Store the authenticated login in the public variable
+					loginAutenticado = usuario;
+					return true;
+				}
+			}
+			
+			try (PreparedStatement stmt = con.prepareStatement(administradorQuery)) {
+				stmt.setString(1, usuario);
+				stmt.setString(2, senha);
+				ResultSet resultSet = stmt.executeQuery();
+				if (resultSet.next()) {
+					loginAutenticado = usuario;
 					return true;
 				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			// Handle SQLException appropriately
 		}
 		
-		// If authentication fails for both aluno and professor
 		return false;
 	}
 	
 
-	public boolean verificarLoginExistente(String login) throws SQLException {
-		String sqlProfessor = "SELECT COUNT(*) AS count FROM professor WHERE login = ?";
-		String sqlAluno = "SELECT COUNT(*) AS count FROM aluno WHERE login = ?";
+public boolean verificarLoginExistente(String login) throws SQLException {
+    String sqlProfessor = "SELECT COUNT(*) AS count FROM professor WHERE login = ?";
+    String sqlAluno = "SELECT COUNT(*) AS count FROM aluno WHERE login = ?";
+    String sqlAdministrador = "SELECT COUNT(*) AS count FROM administrador WHERE login = ?";
 
-		try (PreparedStatement stmtProfessor = con.prepareStatement(sqlProfessor);
-				PreparedStatement stmtAluno = con.prepareStatement(sqlAluno)) {
+    try (PreparedStatement stmtProfessor = con.prepareStatement(sqlProfessor);
+         PreparedStatement stmtAluno = con.prepareStatement(sqlAluno);
+         PreparedStatement stmtAdministrador = con.prepareStatement(sqlAdministrador)) {
 
-			stmtProfessor.setString(1, login);
-			stmtAluno.setString(1, login);
+        stmtProfessor.setString(1, login);
+        stmtAluno.setString(1, login);
+        stmtAdministrador.setString(1, login);
 
-			ResultSet resultSetProfessor = stmtProfessor.executeQuery();
-			ResultSet resultSetAluno = stmtAluno.executeQuery();
+        ResultSet resultSetProfessor = stmtProfessor.executeQuery();
+        ResultSet resultSetAluno = stmtAluno.executeQuery();
+        ResultSet resultSetAdministrador = stmtAdministrador.executeQuery();
 
-			int countProfessor = resultSetProfessor.next() ? resultSetProfessor.getInt("count") : 0;
-			int countAluno = resultSetAluno.next() ? resultSetAluno.getInt("count") : 0;
+        int countProfessor = resultSetProfessor.next() ? resultSetProfessor.getInt("count") : 0;
+        int countAluno = resultSetAluno.next() ? resultSetAluno.getInt("count") : 0;
+        int countAdministrador = resultSetAdministrador.next() ? resultSetAdministrador.getInt("count") : 0;
 
-			return (countProfessor > 0 || countAluno > 0);
-		}
-	}
+        return (countProfessor > 0 || countAluno > 0 || countAdministrador > 0);
+    }
+}
+
 
 	public void excluirTodosProfessoresAlunos() throws SQLException {
 		String sqlDeleteProfessores = "DELETE FROM professor";
@@ -122,14 +112,11 @@ public class Conexao {
 	}
 
 	public String obterNomePorLogin(String login) throws SQLException {
-		// Query for aluno table
 		String alunoQuery = "SELECT name FROM aluno WHERE login = ?";
-		
-		// Query for professor table
 		String professorQuery = "SELECT name FROM professor WHERE login = ?";
+		String administradorQuery = "SELECT name FROM administrador WHERE login = ?";
 		
 		try {
-			// Try aluno query first
 			try (PreparedStatement stmt = con.prepareStatement(alunoQuery)) {
 				stmt.setString(1, login);
 				ResultSet resultSet = stmt.executeQuery();
@@ -138,8 +125,15 @@ public class Conexao {
 				}
 			}
 			
-			// If aluno query didn't return a result, try professor query
 			try (PreparedStatement stmt = con.prepareStatement(professorQuery)) {
+				stmt.setString(1, login);
+				ResultSet resultSet = stmt.executeQuery();
+				if (resultSet.next()) {
+					return resultSet.getString("name");
+				}
+			}
+			
+			try (PreparedStatement stmt = con.prepareStatement(administradorQuery)) {
 				stmt.setString(1, login);
 				ResultSet resultSet = stmt.executeQuery();
 				if (resultSet.next()) {
@@ -148,13 +142,11 @@ public class Conexao {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			// Handle SQLException appropriately
 		}
 		
 		System.out.println("Nenhum nome encontrado para o login: " + login);
 		return null;
-	}
-	
+	}	
 
 	public void registrarAluno(String login, String senha, String nome) throws SQLException {
 		String sqlInsertAluno = "INSERT INTO aluno (login, password, name) VALUES (?, ?, ?)";
@@ -176,16 +168,38 @@ public class Conexao {
 		}
 	}
 
-	public boolean verificarTipoUsuario(String login) throws SQLException {
+	public int verificarTipoUsuario(String login) throws SQLException {
+		String sqlAluno = "SELECT COUNT(*) AS count FROM aluno WHERE login = ?";
 		String sqlProfessor = "SELECT COUNT(*) AS count FROM professor WHERE login = ?";
-
+		String sqlAdministrador = "SELECT COUNT(*) AS count FROM administrador WHERE login = ?";
+	
+		try (PreparedStatement stmtAluno = con.prepareStatement(sqlAluno)) {
+			stmtAluno.setString(1, login);
+			ResultSet resultSetAluno = stmtAluno.executeQuery();
+			if (resultSetAluno.next() && resultSetAluno.getInt("count") > 0) {
+				return 1; // Aluno
+			}
+		}
+	
 		try (PreparedStatement stmtProfessor = con.prepareStatement(sqlProfessor)) {
 			stmtProfessor.setString(1, login);
-
 			ResultSet resultSetProfessor = stmtProfessor.executeQuery();
-			return resultSetProfessor.next() && resultSetProfessor.getInt("count") > 0;
+			if (resultSetProfessor.next() && resultSetProfessor.getInt("count") > 0) {
+				return 2; // Professor
+			}
 		}
+	
+		try (PreparedStatement stmtAdministrador = con.prepareStatement(sqlAdministrador)) {
+			stmtAdministrador.setString(1, login);
+			ResultSet resultSetAdministrador = stmtAdministrador.executeQuery();
+			if (resultSetAdministrador.next() && resultSetAdministrador.getInt("count") > 0) {
+				return 3; // Administrador
+			}
+		}
+	
+		return 0;
 	}
+	
 
 	public List<String> obterMateriasPorProfessor(String login) throws SQLException {
 		String sql = "SELECT m.nome_materia FROM materia m "
@@ -273,10 +287,11 @@ public class Conexao {
         	}
     	} catch (SQLException e) {
         	e.printStackTrace();
-        	// Handle SQLException appropriately
     	}
 		return 0;
 	}
+	
+
 	public int obteIdMateriaPorNome(String materiaName) throws SQLException {
 		String idMateriaQuery = "SELECT id_materia FROM materia WHERE nome_materia = ?";
 
@@ -342,11 +357,8 @@ public class Conexao {
 			stmt.setDouble(6, finalExam);
 			stmt.setInt(7, idAluno);
 			stmt.setInt(8, idMateria);
-			
-			inserirNotificacao(idAluno, idMateria);
 	
 			stmt.executeUpdate();
-			
 		}
 	}
 
@@ -365,10 +377,141 @@ public class Conexao {
 			if (resultSet.next()) {
 				return resultSet.getString("name");
 			} else {
-				return null; // No professor found for the given materia
+				return null;
 			}
 		}
 	}
+
+	public List<Par<Integer, String>> mostrarTodosAlunos() throws SQLException {
+		List<Par<Integer, String>> alunos = new ArrayList<>();
+
+		String sql = "SELECT id_aluno, name FROM aluno";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			ResultSet resultSet = stmt.executeQuery();
+
+			while (resultSet.next()) {
+				int idAluno = resultSet.getInt("id_aluno");
+				String nomeAluno = resultSet.getString("name");
+				alunos.add(new Par<>(idAluno, nomeAluno));
+			}
+		}
+
+		return alunos;
+	}
+
+	public List<Par<Integer, String>> mostrarTodosProfessores() throws SQLException {
+		List<Par<Integer, String>> professores = new ArrayList<>();
+
+		String sql = "SELECT id_professor, name FROM professor";
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			ResultSet resultSet = stmt.executeQuery();
+
+			while (resultSet.next()) {
+				int idProfessor = resultSet.getInt("id_professor");
+				String nomeProfessor = resultSet.getString("name");
+				professores.add(new Par<>(idProfessor, nomeProfessor));
+			}
+		}
+
+		return professores;
+	}
+
+	public List<String> obterMateriasPorIdProfessor(int idProfessor) throws SQLException {
+		String sql = "SELECT m.nome_materia FROM materia m "
+				+ "JOIN professor_materia pm ON m.id_materia = pm.id_materia "
+				+ "JOIN professor p ON pm.id_professor = p.id_professor " + "WHERE p.id_professor = ?";
+	
+		List<String> materias = new ArrayList<>();
+	
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idProfessor);
+	
+			ResultSet resultSet = stmt.executeQuery();
+	
+			while (resultSet.next()) {
+				materias.add(resultSet.getString("nome_materia"));
+			}
+		}
+	
+		return materias;
+	}
+	
+	public List<String> obterMateriasPorIdAluno(int idAluno) throws SQLException {
+		String sql = "SELECT m.nome_materia FROM materia m " + "JOIN aluno_materia am ON m.id_materia = am.id_materia "
+				+ "JOIN aluno a ON am.id_aluno = a.id_aluno " + "WHERE a.id_aluno = ?";
+	
+		List<String> materias = new ArrayList<>();
+	
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+	
+			ResultSet resultSet = stmt.executeQuery();
+	
+			while (resultSet.next()) {
+				materias.add(resultSet.getString("nome_materia"));
+			}
+		}
+	
+		return materias;
+	}
+
+	public List<String> obterTodasAsMaterias() throws SQLException {
+		String sql = "SELECT nome_materia FROM materia";
+	
+		List<String> materias = new ArrayList<>();
+	
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			ResultSet resultSet = stmt.executeQuery();
+	
+			while (resultSet.next()) {
+				materias.add(resultSet.getString("nome_materia"));
+			}
+		}
+	
+		return materias;
+	}
+	
+	public void adicionarRelacaoAlunoMateria(int idAluno, int idMateria) throws SQLException {
+		String sql = "INSERT INTO aluno_materia (id_aluno, id_materia) VALUES (?, ?)";
+		
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+			stmt.setInt(2, idMateria);
+			stmt.executeUpdate();
+		}
+	}
+	
+	public void removerRelacaoAlunoMateria(int idAluno, int idMateria) throws SQLException {
+		String sql = "DELETE FROM aluno_materia WHERE id_aluno = ? AND id_materia = ?";
+		
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+			stmt.setInt(2, idMateria);
+			stmt.executeUpdate();
+		}
+	}
+
+	public void adicionarRelacaoProfessorMateria(int idProfessor, int idMateria) throws SQLException {
+		String sql = "INSERT INTO professor_materia (id_professor, id_materia) VALUES (?, ?)";
+		
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idProfessor);
+			stmt.setInt(2, idMateria);
+			stmt.executeUpdate();
+		}
+	}
+	
+	public void removerRelacaoProfessorMateria(int idProfessor, int idMateria) throws SQLException {
+		String sql = "DELETE FROM professor_materia WHERE id_professor = ? AND id_materia = ?";
+		
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idProfessor);
+			stmt.setInt(2, idMateria);
+			stmt.executeUpdate();
+		}
+	}	
 	
 	public void inserirNotificacao(int idAluno, int idMateria) throws SQLException {
 		String materia;
@@ -387,7 +530,6 @@ public class Conexao {
         } catch (SQLException e) {
 			e.printStackTrace();
         }
-		// Handle SQLException appropriately
 		return null;
 	}
 

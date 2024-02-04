@@ -9,7 +9,7 @@ public class AdminMenu {
 		Conexao con = new Conexao();
 		int menu = 0;
 		while (menu != 99) {
-			System.out.println("Selecione uma opção:");
+			System.out.println("Selecione uma opcao:");
 			System.out.println("8 - RESET (exclue tudo da DB)");
 			System.out.println("99 - Sair");
 			menu = sc.nextInt();
@@ -17,13 +17,13 @@ public class AdminMenu {
 			switch (menu) {
 
 			case 8:
-				System.out.println("Tem certeza que deseja excluir todos os professores e alunos? (1-Sim / 2-Não)");
+				System.out.println("Tem certeza que deseja excluir todos os professores e alunos? (1-Sim / 2-Nao)");
 				int confirmacao = sc.nextInt();
 				if (confirmacao == 1) {
 					con.excluirTodosProfessoresAlunos();
 					System.out.println("Todos os professores e alunos foram excluídos.");
 				} else {
-					System.out.println("Operação cancelada.");
+					System.out.println("Operacao cancelada.");
 				}
 				break;
 
@@ -31,7 +31,7 @@ public class AdminMenu {
 				break;
 
 			default:
-				System.out.println("Opção inválida.");
+				System.out.println("Opção invalida.");
 				break;
 			}
 		}

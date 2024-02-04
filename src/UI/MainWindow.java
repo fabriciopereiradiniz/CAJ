@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import DB.Conexao;
+import DB.Par;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,43 +31,434 @@ public class MainWindow extends JFrame {
     }
 
     private void initialize() {
-        this.setBounds(100, 100, 800, 600);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.getContentPane().setLayout(null);
-        this.setResizable(false);
-        nomeUsuario = "";
-        try {
-            nomeUsuario = conexao.obterNomePorLogin(conexao.loginAutenticado);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+		this.setBounds(100, 100, 800, 600);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.getContentPane().setLayout(null);
 
-        try {
-            boolean isProfessor = conexao.verificarTipoUsuario(conexao.loginAutenticado);
+		nomeUsuario = "";
+		try {
+			nomeUsuario = conexao.obterNomePorLogin(conexao.loginAutenticado);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-            if (isProfessor) {
-                materias = conexao.obterMateriasPorProfessor(conexao.loginAutenticado);
-                exibirInformacoesProfessor(materias);
-            } else {
-                materias = conexao.obterMateriasPorAluno(conexao.loginAutenticado);
-                exibirInformacoesAluno(materias);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+		try {
+			int tipoUsuario = conexao.verificarTipoUsuario(conexao.loginAutenticado);
+
+			if (tipoUsuario == 3) {
+				exibirInformacoesAdministrador();
+			} else if (tipoUsuario == 2) {
+				materias = conexao.obterMateriasPorProfessor(conexao.loginAutenticado);
+				exibirInformacoesProfessor(materias);
+			} else if (tipoUsuario == 1) {
+				materias = conexao.obterMateriasPorAluno(conexao.loginAutenticado);
+				exibirInformacoesAluno(materias);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+    
+	private void exibirInformacoesAdministrador() {
+		getContentPane().removeAll();
+	
+		panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		getContentPane().add(panel);
+
+        setTitle("Area do Administrador");
+	
+		JLabel lblInformacoes = new JLabel("Informacoes");
+		lblInformacoes.setHorizontalAlignment(SwingConstants.CENTER);
+		panel.add(lblInformacoes, BorderLayout.NORTH);
+	
+		JPanel buttonPanel = new JPanel(new FlowLayout());
+	
+		JButton btnAlunos = new JButton("Alunos");
+		btnAlunos.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mostrarTabelaAlunos();
+			}
+		});
+		buttonPanel.add(btnAlunos);
+	
+		JButton btnProfessores = new JButton("Professores");
+		btnProfessores.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mostrarTabelaProfessores();
+			}
+		});
+		buttonPanel.add(btnProfessores);
+	
+		panel.add(buttonPanel, BorderLayout.CENTER);
+
+		this.setContentPane(panel);
+	
+		revalidate();
+		repaint();
+	}
+
+	private void mostrarTabelaAlunos() {
+        setTitle("Informacao dos Alunos");
+
+		List<Par<Integer, String>> alunos = null;
+		try {
+			alunos = conexao.mostrarTodosAlunos();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		JPanel alunoPanel = new JPanel();
+		alunoPanel.setLayout(new BorderLayout());
+		alunoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JButton btnBack = new JButton("Voltar");
+		btnBack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exibirInformacoesAdministrador();
+			}
+		});
+		controlPanel.add(btnBack);
+	
+		JLabel lblAlunos = new JLabel("Lista dos alunos");
+		controlPanel.add(lblAlunos);
+	
+		alunoPanel.add(controlPanel, BorderLayout.NORTH);
+	
+		JPanel tableHeaderPanel = new JPanel(new GridLayout(1, 3));
+		tableHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+		tableHeaderPanel.add(new JLabel("ID"));
+		tableHeaderPanel.add(new JLabel("Nome"));
+		tableHeaderPanel.add(new JLabel("Detalhes"));
+	
+
+		JPanel tableRowsPanel = new JPanel();
+		tableRowsPanel.setLayout(new BoxLayout(tableRowsPanel, BoxLayout.Y_AXIS));
+		JScrollPane scrollPane = new JScrollPane(tableRowsPanel);
+		alunoPanel.add(scrollPane, BorderLayout.CENTER);
+
+		tableRowsPanel.add(tableHeaderPanel);
+	
+
+		for (Par<Integer, String> aluno : alunos) {
+			JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+			rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+			rowPanel.add(new JLabel(aluno.getFirst().toString()));
+			rowPanel.add(new JLabel(aluno.getSecond()));
+	
+
+			JButton viewButton = new JButton("Ver");
+			int alunoId = aluno.getFirst();
+			String alunoName = aluno.getSecond();
+			viewButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					try {
+						mostrarTabelaMateriasAluno(alunoId, alunoName);
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+			});
+			rowPanel.add(viewButton);
+			tableRowsPanel.add(rowPanel);
+		}
+	
+		panel.removeAll();
+		panel.add(alunoPanel);
+		panel.revalidate();
+		panel.repaint();
+	}
+	
+	private void mostrarTabelaMateriasAluno(int alunoId, String alunoName) throws SQLException {
+        setTitle("Atribuicao de Materias");
+
+		List<String> materias = null;
+		try {
+			materias = conexao.obterTodasAsMaterias();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		List<String> materiasDoAluno = null;
+		try {
+			materiasDoAluno = conexao.obterMateriasPorIdAluno(alunoId);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		JPanel materiaPanel = new JPanel();
+		materiaPanel.setLayout(new BorderLayout());
+		materiaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JButton btnBack = new JButton("Voltar");
+		btnBack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mostrarTabelaAlunos();
+			}
+		});
+		controlPanel.add(btnBack);
+		materiaPanel.add(controlPanel, BorderLayout.NORTH);
+
+		JLabel lblAlunos = new JLabel("Materias do aluno: " + alunoName);
+		controlPanel.add(lblAlunos);
+	
+		JPanel tableHeaderPanel = new JPanel(new GridLayout(1, 3));
+		tableHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+		tableHeaderPanel.add(new JLabel("ID"));
+		tableHeaderPanel.add(new JLabel("Nome"));
+		tableHeaderPanel.add(new JLabel("Operacao"));
+	
+		JPanel tableRowsPanel = new JPanel();
+		tableRowsPanel.setLayout(new BoxLayout(tableRowsPanel, BoxLayout.Y_AXIS));
+		JScrollPane scrollPane = new JScrollPane(tableRowsPanel);
+		materiaPanel.add(scrollPane, BorderLayout.CENTER);
+
+		tableRowsPanel.add(tableHeaderPanel);
+	
+		for (String materia : materias) {
+			JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+			rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+			rowPanel.add(new JLabel(String.valueOf(conexao.obteIdMateriaPorNome(materia))));
+			rowPanel.add(new JLabel(materia));
+	
+
+			JButton operationButton;
+			if (materiasDoAluno.contains(materia)) {
+				operationButton = new JButton("Remover");
+			} else {
+				operationButton = new JButton("Adicionar");
+			}
+	
+			int materiaId = conexao.obteIdMateriaPorNome(materia);
+			operationButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					try {
+						if (operationButton.getText().equals("Adicionar")) {
+							conexao.adicionarRelacaoAlunoMateria(alunoId, materiaId);
+						} else {
+							conexao.removerRelacaoAlunoMateria(alunoId, materiaId);
+						}
+						mostrarTabelaMateriasAluno(alunoId, alunoName);
+					} catch (SQLException ex) {
+						ex.printStackTrace();
+					}
+				}
+			});
+	
+			rowPanel.add(operationButton);
+			tableRowsPanel.add(rowPanel);
+		}
+	
+		panel.removeAll();
+		panel.add(materiaPanel);
+		panel.revalidate();
+		panel.repaint();
+	}
+	
+	
+	private void mostrarTabelaProfessores() {
+        setTitle("Informacao dos Professores");
+
+		List<Par<Integer, String>> professores = null;
+		try {
+			professores = conexao.mostrarTodosProfessores();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		JPanel professorPanel = new JPanel();
+		professorPanel.setLayout(new BorderLayout());
+		professorPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Padding
+	
+		// Botao voltar
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT)); // Alinhamento para a esquerda
+		JButton btnBack = new JButton("Voltar");
+		btnBack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exibirInformacoesAdministrador();
+			}
+		});
+		controlPanel.add(btnBack);
+	
+		// Label lista dos professores
+		JLabel lblProfessores = new JLabel("Lista dos professores");
+		controlPanel.add(lblProfessores);
+
+		professorPanel.add(controlPanel, BorderLayout.NORTH);
+	
+		// Header da tabela
+		JPanel tableHeaderPanel = new JPanel(new GridLayout(1, 3));
+		tableHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30)); // Altura de cada linha
+		tableHeaderPanel.add(new JLabel("ID"));
+		tableHeaderPanel.add(new JLabel("Nome"));
+		tableHeaderPanel.add(new JLabel("Detalhes"));
+	
+		// Painel da tabela
+		JPanel tableRowsPanel = new JPanel();
+		tableRowsPanel.setLayout(new BoxLayout(tableRowsPanel, BoxLayout.Y_AXIS)); // Alinhar linhas verticalmente
+		JScrollPane scrollPane = new JScrollPane(tableRowsPanel); // Tabela fica scrollavel caso necessario
+		professorPanel.add(scrollPane, BorderLayout.CENTER);
+
+		tableRowsPanel.add(tableHeaderPanel);
+	
+		// Preencher a tabela com as informacoes
+		for (Par<Integer, String> professor : professores) {
+			JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+			rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+			rowPanel.add(new JLabel(professor.getFirst().toString()));
+			rowPanel.add(new JLabel(professor.getSecond()));
+	
+			// Botao para cada linha de professor
+			JButton viewButton = new JButton("Ver");
+			int professorId = professor.getFirst();
+			String professorName = professor.getSecond();
+			viewButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// Logica de clicar no botao
+					// Passa o ID e o nome do professor para a funcao mostrarTabelaMateriasProfesor()
+					try {
+						mostrarTabelaMateriasProfessor(professorId, professorName);
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+			});
+			rowPanel.add(viewButton);
+			tableRowsPanel.add(rowPanel);
+		}
+	
+		// Troca o painel anterior com este dos professores
+		panel.removeAll();
+		panel.add(professorPanel);
+		panel.revalidate();
+		panel.repaint();
+	}
+
+	private void mostrarTabelaMateriasProfessor(int professorId, String professorName) throws SQLException {
+        setTitle("Atribuicao de Materias");
+
+		// Pega todas as materias do banco
+		List<String> materias = null;
+		try {
+			materias = conexao.obterTodasAsMaterias();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		// Pega todas as materias associadas com este professor do banco
+		List<String> materiasDoProfessor = null;
+		try {
+			materiasDoProfessor = conexao.obterMateriasPorIdProfessor(professorId);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		// Painel de informacoes das materias
+		JPanel materiaPanel = new JPanel();
+		materiaPanel.setLayout(new BorderLayout());
+		materiaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Padding
+	
+		// Botao voltar
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT)); // Alinhamento para esquerda
+		JButton btnBack = new JButton("Voltar");
+		btnBack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mostrarTabelaProfessores();
+			}
+		});
+		controlPanel.add(btnBack);
+		materiaPanel.add(controlPanel, BorderLayout.NORTH);
+
+		// Label da lista das materias
+		JLabel lblProfessor = new JLabel("Materias do aluno: " + professorName);
+		controlPanel.add(lblProfessor);
+	
+		// Header da tabela
+		JPanel tableHeaderPanel = new JPanel(new GridLayout(1, 3));
+		tableHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+		tableHeaderPanel.add(new JLabel("ID"));
+		tableHeaderPanel.add(new JLabel("Nome"));
+		tableHeaderPanel.add(new JLabel("Operacao"));
+	
+		// Painel da tabela
+		JPanel tableRowsPanel = new JPanel();
+		tableRowsPanel.setLayout(new BoxLayout(tableRowsPanel, BoxLayout.Y_AXIS));
+		JScrollPane scrollPane = new JScrollPane(tableRowsPanel);
+		materiaPanel.add(scrollPane, BorderLayout.CENTER);
+
+		tableRowsPanel.add(tableHeaderPanel);
+	
+		// Preencher tabela com informacoes
+		for (String materia : materias) {
+			JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+			rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+			// Obter ID da materia do banco
+			int materiaId = conexao.obteIdMateriaPorNome(materia);
+
+			rowPanel.add(new JLabel(String.valueOf(materiaId)));
+			rowPanel.add(new JLabel(materia));
+
+			// Botao para cada materia dependendo se esta associada ou nao
+			JButton operationButton;
+			if (materiasDoProfessor.contains(materia)) {
+				operationButton = new JButton("Remover");
+			} else {
+				operationButton = new JButton("Adicionar");
+			}
+	
+			operationButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					try {
+						if (operationButton.getText().equals("Adicionar")) {
+							conexao.adicionarRelacaoProfessorMateria(professorId, materiaId);
+						} else {
+							conexao.removerRelacaoProfessorMateria(professorId, materiaId);
+						}
+						// Atualizar a UI para mostrar mudancas
+						mostrarTabelaMateriasAluno(professorId, professorName);
+					} catch (SQLException ex) {
+						ex.printStackTrace();
+					}
+				}
+			});
+	
+			rowPanel.add(operationButton);
+			tableRowsPanel.add(rowPanel);
+		}
+	
+		// Troca o painel anterior com este das materias
+		panel.removeAll();
+		panel.add(materiaPanel);
+		panel.revalidate();
+		panel.repaint();
+	}
 
     private void exibirInformacoesProfessor(List<String> materias) {
     	this.getContentPane().setBackground(Color.WHITE);
         int gridSize = materias.size();
         System.out.println(gridSize);
 
+        setTitle("Area do Professor");
+
         if (gridSize < 2) {
             gridSize = 2;
         }
-        getContentPane().removeAll(); // Remove existing components
+        getContentPane().removeAll();
         panel = new JPanel();
-        panel.setLayout(new GridLayout(gridSize + 2, 2)); // Plus 2 for labels in the first two rows
+        panel.setLayout(new GridLayout(gridSize + 2, 2));
         panel.setBounds(39, 50, 300, gridSize * 30);
         getContentPane().add(panel);
 
@@ -87,7 +479,7 @@ public class MainWindow extends JFrame {
 
 
 
-        JLabel emptyLabel = new JLabel(); // Empty label for layout
+        JLabel emptyLabel = new JLabel();
         panel.add(emptyLabel);
         panel.setBounds(80, 60, 630	, 330);
         panel.setBackground(Color.white);
@@ -109,7 +501,6 @@ public class MainWindow extends JFrame {
             lblMateria.setFont(customFont12);
             panel.add(lblMateria);
             
-
             MyButton btnView = new MyButton();
             btnView.setFont(customFont12);
             btnView.setBackground(new Color(227, 227, 227));
@@ -130,17 +521,14 @@ public class MainWindow extends JFrame {
         selectedMateria = materia;
         idSelectedMateria = conexao.obteIdMateriaPorNome(selectedMateria);
 
-        // Set title
         setTitle("Materia: " + materia);
 
-        // Remove previous panel if exists
         if (panel != null) {
             getContentPane().remove(panel);
             revalidate();
             repaint();
         }
 
-        // Create back button
         MyButton btnBack = new MyButton();
         btnBack.setBackground(new Color(227, 227, 227));
         btnBack.setColorOver(new Color (217, 217, 217));
@@ -150,17 +538,12 @@ public class MainWindow extends JFrame {
         btnBack.addActionListener(new BackButtonActionListener());
         getContentPane().add(btnBack);
 
-        // Create table with headers
         String[] columnHeaders = {"ID", "Aluno", "Faltas", "1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre", "Exame", "Editar"};
         tableModel = new DefaultTableModel(columnHeaders, 0) {
-            /**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
             public boolean isCellEditable(int row, int column) {
-                // Allow editing all cells except the "Aluno" column
                 return column != 0;
             }
         };
@@ -191,18 +574,15 @@ public class MainWindow extends JFrame {
             e.printStackTrace();
         }
         
-        
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBounds(39, 100, 700, 400);
         getContentPane().add(scrollPane);
 
-        // Populate table with student information
         try {
             List<Integer> alunos = conexao.obterAlunosPorMateria(materia);
             for (Integer alunoId : alunos) {
                 List<Object> alunoInfo = conexao.obterAlunoInfoPorId(alunoId, idSelectedMateria);
 
-                // Add student information to the table model
                 Object[] rowData = new Object[9];
                 System.out.println(rowData[0]);
 
@@ -216,25 +596,19 @@ public class MainWindow extends JFrame {
             e.printStackTrace();
         }
 
-        // Add action listener for the "Save" button
         table.getColumn("Editar").setCellRenderer(new ButtonRenderer());
         table.getColumn("Editar").setCellEditor(new ButtonEditor(new JTextField()));
     }
 
     private void exibirInformacoesAluno(List<String> materias) throws SQLException {
-        getContentPane().removeAll(); // Remove existing components
+        getContentPane().removeAll();
 		this.getContentPane().setBackground(Color.WHITE);
         
         
+        setTitle("Area do Aluno");
         
-        
-        
-        // Create table with headers
         String[] columnHeaders = {"ID", "Matéria", "Faltas", "1º Bimestre", "2º Bimestre", "3º Bimestre", "4º Bimestre", "Exame"};
         tableModel = new DefaultTableModel(columnHeaders, 0) {
-            /**
-			 * 
-			 */
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -244,12 +618,7 @@ public class MainWindow extends JFrame {
         };
         table = new JTable(tableModel);
         
-        
 
-        
-        
-        
-        
         try {
             File fontFileAreaAluno = new File("src\\SF-Pro-Display-Regular.otf");
             Font customFontAreaLogin = Font.createFont(Font.TRUETYPE_FONT, fontFileAreaAluno);
@@ -278,13 +647,10 @@ public class MainWindow extends JFrame {
 
 			table.setFont(customFont14);
 
-			
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
         
-		
         try {
             File fontFileAreaAluno = new File("src\\SFUIText-Light.otf");
             Font customFontAreaLogin = Font.createFont(Font.TRUETYPE_FONT, fontFileAreaAluno);
@@ -312,13 +678,11 @@ public class MainWindow extends JFrame {
         scrollPane.setBounds(39, 100, 700, 400);
         getContentPane().add(scrollPane);
 
-        // Populate table with student information
         try {
             for (String materia : materias) {
                 int idMateriaAtual = conexao.obteIdMateriaPorNome(materia);
                 List<Object> alunoInfo = conexao.obterAlunoInfoPorId(conexao.idAluno, idMateriaAtual);
 
-                // Add student information to the table model
                 Object[] rowData = new Object[8];
                 System.out.println(rowData[0]);
 
@@ -365,7 +729,7 @@ public class MainWindow extends JFrame {
         public void actionPerformed(ActionEvent e) {
             getContentPane().remove(table);
             getContentPane().remove((JButton) e.getSource());
-            getContentPane().remove(panel); // Remove the panel
+            getContentPane().remove(panel);
             getContentPane().revalidate();
             getContentPane().repaint();
             try {
@@ -378,9 +742,6 @@ public class MainWindow extends JFrame {
     }
 
     private class ButtonRenderer extends JButton implements TableCellRenderer {
-        /**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 
 		public ButtonRenderer() {
@@ -395,9 +756,6 @@ public class MainWindow extends JFrame {
     }
 
     private class ButtonEditor extends DefaultCellEditor {
-        /**
-		 * 
-		 */
 		private static final long serialVersionUID = 1L;
 		private JButton button;
         private String label;
@@ -429,7 +787,6 @@ public class MainWindow extends JFrame {
         @Override
         public Object getCellEditorValue() {
             if (isPushed) {
-                // Handle button click
                 int idAluno = (int) parseValue(table.getValueAt(table.getSelectedRow(), 0));
                 int faltas = (int) parseValue(table.getValueAt(table.getSelectedRow(), 2));
                 double grade1 = parseValue(table.getValueAt(table.getSelectedRow(), 3));
