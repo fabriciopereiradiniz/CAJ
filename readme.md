@@ -6,7 +6,7 @@
 ## Compilação e execucação do programa
 
 <div align="left">
-  É importante ressaltar que para que a execução do progarma funcione é necessário o Java Development Kit (JDK), além disso será necessário criar as tabelas fictícias que o programa necessita para pleno funcionamento, caso queira rodar em sua máquina utilizando sua database recomenda-se ler o arquivo `conexao.java` pois nele é possível visualizar todos os queries feitos durante a execução.
+  É importante ressaltar que para que a execução do programa funcione é necessário o Java Development Kit (JDK), além disso será necessário criar as tabelas fictícias que o programa necessita para pleno funcionamento, caso queira rodar em sua máquina utilizando sua database recomenda-se ler o arquivo `conexao.java` pois nele é possível visualizar todos os queries feitos durante a execução.
 
 Se possível será feito um upload de instalador do programa em breve!
 
