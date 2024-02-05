@@ -517,6 +517,19 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 		String materia;
 		materia = obterNomeMateriaPorId(idMateria);
         notificacoes.computeIfAbsent(idAluno, k -> new ArrayList<>()).add(materia);
+		String sql = "INSERT INTO notificacao (id_aluno, nome_materia) VALUES (?, ?)";
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+			stmt.setString(2, materia);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+    	// Lidar com a exceção conforme necessário
+		}
+
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.executeUpdate();
+		}
     }
 
     private String obterNomeMateriaPorId(int idMateria) {
@@ -533,21 +546,47 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 		return null;
 	}
 
-	public List<String> obterNotificacoesNaoLidas(int idAluno) {
-        List<String> notificacoesDoAluno = notificacoes.getOrDefault(idAluno, new ArrayList<>());
-        notificacoes.remove(idAluno);
-        return notificacoesDoAluno;
+	public String obterNotificacoesNaoLidas(int idAluno) {
+        //List<String> notificacoesDoAluno = notificacoes.getOrDefault(idAluno, new ArrayList<>());
+		String sql = "SELECT nome_materia FROM notificacao WHERE id_aluno = ?";
+    
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+			ResultSet resultSet = stmt.executeQuery();
+	
+			if (resultSet.next()) {
+				return resultSet.getString("nome_materia");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			// Lidar com a exceção conforme necessário
+		}
+	
+		// Retorna null se não encontrar nenhuma matéria para o id_aluno
+		return null;
     }
 
 	public Boolean notificacaoIsTrue(String nome) throws SQLException{
 		int id = obterIdAluno(nome);
-		List<String> notificacoes = obterNotificacoesNaoLidas(id);
-		if(notificacoes.size() > 0) {
+		String notificacoes = obterNotificacoesNaoLidas(id);
+		if(notificacoes != null) {
 			return true;
 		}else{
 			return false;
 		}
 
+	}
+	public void resetar_notificacao(){
+		String sql = "DELETE FROM notificacao WHERE id_aluno = ?";
+    
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			stmt.setInt(1, idAluno);
+			stmt.executeUpdate();
+			System.out.println("Notificações deletadas para o id_aluno: " + idAluno);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			// Lidar com a exceção conforme necessário
+		}
 	}
 
 }

@@ -696,14 +696,12 @@ public class MainWindow extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (conexao.notificacaoIsTrue(nomeUsuario)) {
+		if (conexao.notificacaoIsTrue(nomeUsuario)) {
+            System.out.println("Notificacoes on");
             int id = (conexao.obterIdAluno(nomeUsuario));
-            List<String> nome_materias = conexao.obterNotificacoesNaoLidas(id);
-            String concatenatedString = "";
-            for (int i = 0; i < nome_materias.size(); i++) {
-                concatenatedString += nome_materias.get(i) + ", ";
-            }
-            exibirPopup("A(s) Matéria(s) " + concatenatedString + " sofreram alteração");
+            String nome_materia = conexao.obterNotificacoesNaoLidas(id);
+            exibirPopup("A Matéria de " + nome_materia + " foi alterada");
+            conexao.resetar_notificacao();
         }
     }
 
@@ -797,15 +795,10 @@ public class MainWindow extends JFrame {
 
                 if(grade1<0 || grade1>10 || grade2<0 || grade2>10 || grade3<0 || grade3>10 || grade4<0 || grade4>10){
                     exibirPopup("Erro! Notas devem ser de 1 a 10!");
-                }else{
-                    try {
-                        conexao.inserirNotificacao(idAluno,idSelectedMateria);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-    
+                }else{    
                     try {
                         conexao.atualizarInfoAluno(idAluno, idSelectedMateria, faltas, grade1, grade2, grade3, grade4, finalExam);
+						conexao.inserirNotificacao(idAluno,idSelectedMateria);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
