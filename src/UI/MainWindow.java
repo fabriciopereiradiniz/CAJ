@@ -34,6 +34,7 @@ public class MainWindow extends JFrame {
 		this.setBounds(100, 100, 800, 600);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.getContentPane().setLayout(null);
+		this.setResizable(false);
 
 		nomeUsuario = "";
 		try {
@@ -584,11 +585,29 @@ public class MainWindow extends JFrame {
                 List<Object> alunoInfo = conexao.obterAlunoInfoPorId(alunoId, idSelectedMateria);
 
                 Object[] rowData = new Object[9];
-                System.out.println(rowData[0]);
 
                 for (int i = 0; i <= 7; i++) {
-                    rowData[i] = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
+                    Object value = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
+                    rowData[i] = value;
+
+                    if ((i == 3 || i == 4 || i == 5 || i == 6) && value instanceof Number && ((Number) value).doubleValue() < 7.0) {
+                        // Se a nota for menor que 7.0 e estiver nos índices 3, 4, 5 ou 6, definimos a cor vermelha
+                        table.getColumnModel().getColumn(i).setCellRenderer(new DefaultTableCellRenderer() {
+                            /**
+							 * 
+							 */
+							private static final long serialVersionUID = 1L;
+
+							@Override
+                            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                                c.setForeground(Color.RED);
+                                return c;
+                            }
+                        });
+                    }
                 }
+
                 rowData[8] = new JButton("Editar");
                 tableModel.addRow(rowData);
             }
@@ -684,18 +703,36 @@ public class MainWindow extends JFrame {
                 List<Object> alunoInfo = conexao.obterAlunoInfoPorId(conexao.idAluno, idMateriaAtual);
 
                 Object[] rowData = new Object[8];
-                System.out.println(rowData[0]);
 
                 for (int i = 0; i <= 7; i++) {
-                    rowData[i] = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
+                    Object value = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
+                    rowData[i] = value;
+
+                    if ((i == 3 || i == 4 || i == 5 || i == 6) && value instanceof Number && ((Number) value).doubleValue() < 7.0) {
+                        // Se a nota for menor que 7.0 e estiver nos índices 3, 4, 5 ou 6, definimos a cor vermelha
+                        table.getColumnModel().getColumn(i).setCellRenderer(new DefaultTableCellRenderer() {
+                            /**
+							 * 
+							 */
+							private static final long serialVersionUID = 1L;
+
+							@Override
+                            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                                c.setForeground(Color.RED);
+                                return c;
+                            }
+                        });
+                    }
                 }
+
                 rowData[1] = materia;
                 tableModel.addRow(rowData);
-
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
 		if (conexao.notificacaoIsTrue(nomeUsuario)) {
             System.out.println("Notificacoes on");
             int id = (conexao.obterIdAluno(nomeUsuario));
