@@ -1,21 +1,31 @@
 package entities;
 
-public abstract class Pessoa {
- private String nome;
- private String matricula;
+import java.util.ArrayList;
+import java.util.List;
 
- public Pessoa(String nome, String matricula) {
-     this.nome = nome;
-     this.matricula = matricula;
- }
+public class Pessoa {
+    protected String nome;
+    protected List<String> materias;
 
- public String getNome() {
-     return nome;
- }
+    public Pessoa(String nome) {
+        this.nome = nome;
+        this.materias = new ArrayList<>();
+    }
 
- public String getMatricula() {
-     return matricula;
- }
+    // Getters and setters
+    public String getNome() {
+        return nome;
+    }
 
- public abstract void exibirDetalhes();
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public List<String> getMaterias() {
+        return materias;
+    }
+
+    public void setMaterias(List<String> materias) {
+        this.materias = materias;
+    }
 }

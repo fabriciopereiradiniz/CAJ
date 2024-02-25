@@ -472,6 +472,65 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 	
 		return materias;
 	}
+
+	public List<Par<Integer, String>> obterTodasAsMateriasComId() throws SQLException {
+		String sql = "SELECT id_materia, nome_materia FROM materia";
+		List<Par<Integer, String>> materias = new ArrayList<>();
+	
+		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+			ResultSet resultSet = stmt.executeQuery();
+	
+			while (resultSet.next()) {
+				int id = resultSet.getInt("id_materia");
+				String nome = resultSet.getString("nome_materia");
+				materias.add(new Par<>(id, nome));
+			}
+		}
+	
+		return materias;
+	}
+	
+	public void deletarAssociacoesMateria(int idMateria) throws SQLException {
+		String sqlAlunoMateria = "DELETE FROM aluno_materia WHERE id_materia = ?";
+		try (PreparedStatement stmt = con.prepareStatement(sqlAlunoMateria)) {
+			stmt.setInt(1, idMateria);
+			stmt.executeUpdate();
+		}
+	
+		String sqlProfessorMateria = "DELETE FROM professor_materia WHERE id_materia = ?";
+		try (PreparedStatement stmt = con.prepareStatement(sqlProfessorMateria)) {
+			stmt.setInt(1, idMateria);
+			stmt.executeUpdate();
+		}
+	}
+	
+	public void deletarMateria(int idMateria) throws SQLException {
+		deletarAssociacoesMateria(idMateria);
+	
+		String sqlMateria = "DELETE FROM materia WHERE id_materia = ?";
+		try (PreparedStatement stmt = con.prepareStatement(sqlMateria)) {
+			stmt.setInt(1, idMateria);
+			stmt.executeUpdate();
+		}
+	}
+	
+	public boolean criarMateria(String nomeMateria) throws SQLException {
+		String sqlCheck = "SELECT COUNT(*) FROM materia WHERE nome_materia = ?";
+		try (PreparedStatement stmtCheck = con.prepareStatement(sqlCheck)) {
+			stmtCheck.setString(1, nomeMateria);
+			ResultSet resultSet = stmtCheck.executeQuery();
+			if (resultSet.next() && resultSet.getInt(1) > 0) {
+				return false;
+			}
+		}
+	
+		String sqlInsert = "INSERT INTO materia (nome_materia) VALUES (?)";
+		try (PreparedStatement stmtInsert = con.prepareStatement(sqlInsert)) {
+			stmtInsert.setString(1, nomeMateria);
+			stmtInsert.executeUpdate();
+			return true;
+		}
+	}
 	
 	public void adicionarRelacaoAlunoMateria(int idAluno, int idMateria) throws SQLException {
 		String sql = "INSERT INTO aluno_materia (id_aluno, id_materia) VALUES (?, ?)";

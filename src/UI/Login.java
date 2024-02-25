@@ -26,6 +26,7 @@ public class Login {
 	private JTextField textField;
 	private JPasswordField passwordField;
 	private Conexao conexao;
+	private static Login instance;
 	private MainWindow mainWindow;
 
 	public static void main(String[] args) {
@@ -43,6 +44,7 @@ public class Login {
 
 	public Login() {
 		initialize();
+		instance = this;
 		try {
 			conexao = new Conexao();
 			mainWindow = new MainWindow(conexao);
@@ -50,6 +52,22 @@ public class Login {
 			e.printStackTrace();
 		}
 	}
+
+	public static void showWindow() {
+        if (instance != null) {
+            instance.showLoginWindow();
+        }
+    }
+
+	private void showLoginWindow() {
+		clearTextFields();
+        frame.setVisible(true);
+    }
+
+	private void clearTextFields() {
+        textField.setText(""); // Clear the login field
+        passwordField.setText(""); // Clear the password field
+    }
 
 	private void initialize() {
 		frame = new JFrame();

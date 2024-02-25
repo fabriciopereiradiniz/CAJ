@@ -5,19 +5,20 @@ import javax.swing.table.*;
 
 import DB.Conexao;
 import DB.Par;
+import entities.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainWindow extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private Conexao conexao;
-    private String nomeUsuario;
-    private List<String> materias;
+	private Pessoa usuario;
     private String selectedMateria;
     private int idSelectedMateria;
 
@@ -36,7 +37,7 @@ public class MainWindow extends JFrame {
 		this.getContentPane().setLayout(null);
 		this.setResizable(false);
 
-		nomeUsuario = "";
+		String nomeUsuario = "";
 		try {
 			nomeUsuario = conexao.obterNomePorLogin(conexao.loginAutenticado);
 		} catch (Exception e) {
@@ -47,13 +48,16 @@ public class MainWindow extends JFrame {
 			int tipoUsuario = conexao.verificarTipoUsuario(conexao.loginAutenticado);
 
 			if (tipoUsuario == 3) {
+				usuario = new Administrador(nomeUsuario);
 				exibirInformacoesAdministrador();
 			} else if (tipoUsuario == 2) {
-				materias = conexao.obterMateriasPorProfessor(conexao.loginAutenticado);
-				exibirInformacoesProfessor(materias);
+				usuario = new Professor(nomeUsuario);
+				usuario.setMaterias(conexao.obterMateriasPorProfessor(conexao.loginAutenticado));
+				exibirInformacoesProfessor(usuario.getMaterias());
 			} else if (tipoUsuario == 1) {
-				materias = conexao.obterMateriasPorAluno(conexao.loginAutenticado);
-				exibirInformacoesAluno(materias);
+				usuario = new Aluno(nomeUsuario);
+				usuario.setMaterias(conexao.obterMateriasPorAluno(conexao.loginAutenticado));
+				exibirInformacoesAluno(usuario.getMaterias());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -93,6 +97,24 @@ public class MainWindow extends JFrame {
 			}
 		});
 		buttonPanel.add(btnProfessores);
+
+		JButton btnMaterias = new JButton("Matérias");
+		btnMaterias.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				mostrarTabelaMaterias();
+			}
+		});
+		buttonPanel.add(btnMaterias);
+
+		JButton btnSair = new JButton("Sair");
+		btnSair.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				voltarParaTelaDeLogin();
+			}
+		});
+		buttonPanel.add(btnSair);
 	
 		panel.add(buttonPanel, BorderLayout.CENTER);
 
@@ -100,6 +122,11 @@ public class MainWindow extends JFrame {
 	
 		revalidate();
 		repaint();
+	}
+
+	private void voltarParaTelaDeLogin() {
+		this.dispose();
+		Login.showWindow();
 	}
 
 	private void mostrarTabelaAlunos() {
@@ -428,13 +455,13 @@ public class MainWindow extends JFrame {
 						} else {
 							conexao.removerRelacaoProfessorMateria(professorId, materiaId);
 						}
-						// Atualizar a UI para mostrar mudancas
-						mostrarTabelaMateriasAluno(professorId, professorName);
+						mostrarTabelaMateriasProfessor(professorId, professorName);
 					} catch (SQLException ex) {
 						ex.printStackTrace();
 					}
 				}
 			});
+
 	
 			rowPanel.add(operationButton);
 			tableRowsPanel.add(rowPanel);
@@ -446,6 +473,117 @@ public class MainWindow extends JFrame {
 		panel.revalidate();
 		panel.repaint();
 	}
+
+	private void mostrarTabelaMaterias() {
+		setTitle("Informação das Matérias");
+	
+		List<Par<Integer, String>> materias = null;
+		try {
+			materias = conexao.obterTodasAsMateriasComId();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	
+		JPanel materiaPanel = new JPanel();
+		materiaPanel.setLayout(new BorderLayout());
+		materiaPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	
+		JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JButton btnBack = new JButton("Voltar");
+		btnBack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exibirInformacoesAdministrador();
+			}
+		});
+		controlPanel.add(btnBack);
+	
+		JLabel lblMaterias = new JLabel("Lista das Matérias");
+		controlPanel.add(lblMaterias);
+	
+		materiaPanel.add(controlPanel, BorderLayout.NORTH);
+	
+		JPanel tableHeaderPanel = new JPanel(new GridLayout(1, 3));
+		tableHeaderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+		tableHeaderPanel.add(new JLabel("ID"));
+		tableHeaderPanel.add(new JLabel("Nome"));
+		tableHeaderPanel.add(new JLabel("Operação"));
+	
+		JPanel tableRowsPanel = new JPanel();
+		tableRowsPanel.setLayout(new BoxLayout(tableRowsPanel, BoxLayout.Y_AXIS));
+		JScrollPane scrollPane = new JScrollPane(tableRowsPanel);
+		materiaPanel.add(scrollPane, BorderLayout.CENTER);
+	
+		tableRowsPanel.add(tableHeaderPanel);
+	
+		for (Par<Integer, String> materia : materias) {
+			JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+			rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+			rowPanel.add(new JLabel(materia.getFirst().toString()));
+			rowPanel.add(new JLabel(materia.getSecond()));
+
+			JButton deleteButton = new JButton("Deletar");
+			deleteButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int response = JOptionPane.showConfirmDialog(null, "Voce tem certeza que quer deletar a materia " + materia.getSecond() + "?", "Confirmar", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (response == JOptionPane.YES_OPTION) {
+						try {
+							conexao.deletarMateria(materia.getFirst());
+							// Optionally, refresh the materia list here
+							mostrarTabelaMaterias();
+						} catch (SQLException ex) {
+							ex.printStackTrace();
+							JOptionPane.showMessageDialog(null, "Erro deletando a materia: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				}
+			});
+			rowPanel.add(deleteButton);
+	
+			tableRowsPanel.add(rowPanel);
+		}
+
+		JPanel rowPanel = new JPanel(new GridLayout(1, 3));
+		rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+
+		rowPanel.add(new JLabel(""));
+
+		JTextField newMateriaName = new JTextField();
+		rowPanel.add(newMateriaName);
+
+		JButton createButton = new JButton("Criar");
+		createButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String nomeMateria = newMateriaName.getText();
+				if (!nomeMateria.trim().isEmpty()) {
+					try {
+						boolean created = conexao.criarMateria(nomeMateria);
+						if (created) {
+							mostrarTabelaMaterias();
+						} else {
+							JOptionPane.showMessageDialog(null, "Nome da matéria já existe!", "Erro", JOptionPane.ERROR_MESSAGE);
+						}
+					} catch (SQLException ex) {
+						ex.printStackTrace();
+						JOptionPane.showMessageDialog(null, "Erro ao criar a matéria: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+					}
+				} else {
+					JOptionPane.showMessageDialog(null, "Nome da matéria não pode ser vazio!", "Erro", JOptionPane.WARNING_MESSAGE);
+				}
+			}
+		});
+		rowPanel.add(createButton);
+
+		tableRowsPanel.add(rowPanel);
+	
+		panel.removeAll();
+		panel.add(materiaPanel);
+		panel.revalidate();
+		panel.repaint();
+	}	
+	
 
     private void exibirInformacoesProfessor(List<String> materias) {
     	this.getContentPane().setBackground(Color.WHITE);
@@ -459,7 +597,7 @@ public class MainWindow extends JFrame {
         }
         getContentPane().removeAll();
         panel = new JPanel();
-        panel.setLayout(new GridLayout(gridSize + 2, 2));
+        panel.setLayout(new GridLayout(gridSize + 3, 2));
         panel.setBounds(39, 50, 300, gridSize * 30);
         getContentPane().add(panel);
 
@@ -471,49 +609,65 @@ public class MainWindow extends JFrame {
 
             Font customFont12 = customFontAreaLogin.deriveFont(12f); // Reduzindo o tamanho da fonte para 12 pixels
 
-            JLabel lblWelcomeP = new JLabel("Bem-vindo, " + nomeUsuario + "!");
+            JLabel lblWelcomeP = new JLabel("Bem-vindo, " + usuario.getNome() + "!");
             lblWelcomeP.setFont(customFont12);
             // Ajustando a largura do JLabel para acomodar o texto completamente
             lblWelcomeP.setSize(lblWelcomeP.getPreferredSize());
             lblWelcomeP.setForeground(new Color(29, 29, 31));
             panel.add(lblWelcomeP);
 
+			JLabel emptyLabel = new JLabel();
+			panel.add(emptyLabel);
+			panel.setBounds(80, 60, 630	, 330);
+			panel.setBackground(Color.white);
+			if (materias.size() > 0) {
+				JLabel lblMateriaHeader = new JLabel("Matéria");
+				lblMateriaHeader.setFont(customFont12);
+				panel.add(lblMateriaHeader);
 
+				JLabel blankDebugger = new JLabel("");
+				panel.add(blankDebugger);
+			} else {
+				JLabel lblNoMateriaHeader = new JLabel("Professor sem materias no sistema");
+				lblNoMateriaHeader.setFont(customFont12);
+				panel.add(lblNoMateriaHeader);
+			}
 
-        JLabel emptyLabel = new JLabel();
-        panel.add(emptyLabel);
-        panel.setBounds(80, 60, 630	, 330);
-        panel.setBackground(Color.white);
-        if (materias.size() > 0) {
-            JLabel lblMateriaHeader = new JLabel("Matéria");
-            lblMateriaHeader.setFont(customFont12);
-            panel.add(lblMateriaHeader);
+			for (String materia : materias) {
+				JLabel lblMateria = new JLabel(materia);
+				lblMateria.setFont(customFont12);
+				panel.add(lblMateria);
+				
+				MyButton btnView = new MyButton();
+				btnView.setFont(customFont12);
+				btnView.setBackground(new Color(227, 227, 227));
+				btnView.setColorOver(new Color (217, 217, 217));
+				btnView.setText("Ver");
+				btnView.addActionListener(new ViewButtonActionListener(materia));
+				btnView.setSize(30,30);
+				panel.add(btnView);
+			}
 
-            JLabel blankDebugger = new JLabel("");
-            panel.add(blankDebugger);
-        } else {
-            JLabel lblNoMateriaHeader = new JLabel("Professor sem materias no sistema");
-            lblNoMateriaHeader.setFont(customFont12);
-            panel.add(lblNoMateriaHeader);
-        }
+			for (int i = materias.size(); i < gridSize; i++) {
+				panel.add(new JLabel(""));
+				panel.add(new JLabel(""));
+			}
 
-        for (String materia : materias) {
-            JLabel lblMateria = new JLabel(materia);
-            lblMateria.setFont(customFont12);
-            panel.add(lblMateria);
-            
-            MyButton btnView = new MyButton();
-            btnView.setFont(customFont12);
-            btnView.setBackground(new Color(227, 227, 227));
-            btnView.setColorOver(new Color (217, 217, 217));
-            btnView.setText("Ver");
-            btnView.addActionListener(new ViewButtonActionListener(materia));
-            btnView.setSize(30,30);
-            panel.add(btnView);
-        }
+			JButton btnSair = new JButton("Sair");
+			btnSair.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					voltarParaTelaDeLogin();
+				}
+			});
+			btnSair.setFont(customFont12);
+			panel.add(new JLabel(""));
+			panel.add(btnSair);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         revalidate();
         repaint();
     }
@@ -617,6 +771,33 @@ public class MainWindow extends JFrame {
 
         table.getColumn("Editar").setCellRenderer(new ButtonRenderer());
         table.getColumn("Editar").setCellEditor(new ButtonEditor(new JTextField()));
+
+		double[] averages = new double[6];
+		int studentCount = tableModel.getRowCount();
+
+		if (studentCount > 0) {
+			for (int row = 0; row < studentCount; row++) {
+				for (int col = 2; col <= 7; col++) {
+					Object value = tableModel.getValueAt(row, col);
+					double numericValue = value instanceof Number ? ((Number) value).doubleValue() : 0;
+					averages[col - 2] += numericValue;
+				}
+			}
+
+			for (int i = 0; i < averages.length; i++) {
+				averages[i] /= studentCount;
+			}
+
+			Object[] averageRow = new Object[9];
+			averageRow[0] = "Media";
+			averageRow[1] = "Turma";
+			for (int i = 0; i < averages.length; i++) {
+				averageRow[i + 2] = String.format("%.2f", averages[i]);
+			}
+			averageRow[8] = "";
+
+			tableModel.addRow(averageRow);
+		}
     }
 
     private void exibirInformacoesAluno(List<String> materias) throws SQLException {
@@ -636,7 +817,6 @@ public class MainWindow extends JFrame {
             }
         };
         table = new JTable(tableModel);
-        
 
         try {
             File fontFileAreaAluno = new File("src\\SF-Pro-Display-Regular.otf");
@@ -646,7 +826,7 @@ public class MainWindow extends JFrame {
 
             Font customFont12 = customFontAreaLogin.deriveFont(16f); // Reduzindo o tamanho da fonte para 16 pixels
 
-            JLabel lblWelcome = new JLabel("Bem-vindo, " + nomeUsuario + "!");
+            JLabel lblWelcome = new JLabel("Bem-vindo, " + usuario.getNome() + "!");
             lblWelcome.setFont(customFont12);
             lblWelcome.setBounds(40, 65, 250, 24); // Ajustando a largura para acomodar o texto
             lblWelcome.setForeground(new Color(29, 29, 31));
@@ -703,8 +883,9 @@ public class MainWindow extends JFrame {
                 List<Object> alunoInfo = conexao.obterAlunoInfoPorId(conexao.idAluno, idMateriaAtual);
 
                 Object[] rowData = new Object[8];
+				rowData[0] = idMateriaAtual; // Sets the id_materia in the ID column
 
-                for (int i = 0; i <= 7; i++) {
+                for (int i = 1; i <= 7; i++) {
                     Object value = (alunoInfo.get(i) != null) ? alunoInfo.get(i) : "-";
                     rowData[i] = value;
 
@@ -728,14 +909,45 @@ public class MainWindow extends JFrame {
 
                 rowData[1] = materia;
                 tableModel.addRow(rowData);
-            }
+
+				double bimestreAverage = 0;
+				for (int i = 3; i < 7; i++) {
+					bimestreAverage += (double) alunoInfo.get(i);
+				}
+				bimestreAverage /= 4;
+
+				if (bimestreAverage < 7) {
+					double requiredExamScore = 12 - bimestreAverage;
+					Object[] messageRow = new Object[columnHeaders.length];
+					Arrays.fill(messageRow, null);
+					// Set your message in a specific cell, e.g., the second cell
+					messageRow[1] = "<html><font color='red'>Você ficou</font></html>";
+					messageRow[2] = "<html><font color='red'>de exame.</font></html>";
+					messageRow[3] = "<html><font color='red'>Nota</font></html>";
+					messageRow[4] = "<html><font color='red'>necessaria</font></html>";
+					messageRow[5] = "<html><font color='red'>no exame: </font></html>";
+					messageRow[6] = "<html><font color='red'> " + String.format("%.2f", requiredExamScore) + "</font></html>";
+					tableModel.addRow(messageRow);
+				}
+						}
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-		if (conexao.notificacaoIsTrue(nomeUsuario)) {
+		JButton btnSairAluno = new JButton("Sair");
+		btnSairAluno.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				voltarParaTelaDeLogin();
+			}
+		});
+		btnSairAluno.setBounds(39, 510, 80, 20); // Adjust position and size as needed
+		getContentPane().add(btnSairAluno);
+
+
+		if (conexao.notificacaoIsTrue(usuario.getNome())) {
             System.out.println("Notificacoes on");
-            int id = (conexao.obterIdAluno(nomeUsuario));
+            int id = (conexao.obterIdAluno(usuario.getNome()));
             String nome_materia = conexao.obterNotificacoesNaoLidas(id);
             exibirPopup("A Matéria de " + nome_materia + " foi alterada");
             conexao.resetar_notificacao();
