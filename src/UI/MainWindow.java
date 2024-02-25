@@ -1043,7 +1043,7 @@ public class MainWindow extends JFrame {
                 double finalExam = parseValue(table.getValueAt(table.getSelectedRow(), 7));
 
                 if(grade1<0 || grade1>10 || grade2<0 || grade2>10 || grade3<0 || grade3>10 || grade4<0 || grade4>10){
-                    exibirPopup("Erro! Notas devem ser de 1 a 10!");
+                    exibirPopup("Erro! Notas devem ser de 0 a 10!");
                 }else{    
                     try {
                         conexao.atualizarInfoAluno(idAluno, idSelectedMateria, faltas, grade1, grade2, grade3, grade4, finalExam);
