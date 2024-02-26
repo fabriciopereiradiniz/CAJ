@@ -1382,6 +1382,7 @@ public class MainWindow extends JFrame {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             setText("Salvar");
+	    this.setBackground(Color.WHITE);
             return this;
         }
     }
