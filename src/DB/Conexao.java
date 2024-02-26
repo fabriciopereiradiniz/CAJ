@@ -572,24 +572,64 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 		}
 	}	
 	
-	public void inserirNotificacao(int idAluno, int idMateria) throws SQLException {
-		String materia;
-		materia = obterNomeMateriaPorId(idMateria);
-        notificacoes.computeIfAbsent(idAluno, k -> new ArrayList<>()).add(materia);
-		String sql = "INSERT INTO notificacao (id_aluno, nome_materia) VALUES (?, ?)";
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setInt(1, idAluno);
-			stmt.setString(2, materia);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-    	// Lidar com a exceção conforme necessário
-		}
+	public int contarAlunos() throws SQLException {
+	    String sql = "SELECT COUNT(*) AS count FROM aluno";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.executeUpdate();
-		}
-    }
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        ResultSet resultSet = stmt.executeQuery();
+
+	        if (resultSet.next()) {
+	            return resultSet.getInt("count");
+	        }
+	    }
+
+	    return 0; // Retorna 0 se não houver alunos encontrados
+	}
+
+	public int contarMaterias() throws SQLException {
+	    String sql = "SELECT COUNT(*) AS count FROM materia";
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        ResultSet resultSet = stmt.executeQuery();
+
+	        if (resultSet.next()) {
+	            return resultSet.getInt("count");
+	        }
+	    }
+
+	    return 0; // Retorna 0 se não houver matérias encontradas
+	}
+
+	
+	public int contarProfessores() throws SQLException {
+	    String sql = "SELECT COUNT(*) AS count FROM professor";
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        ResultSet resultSet = stmt.executeQuery();
+
+	        if (resultSet.next()) {
+	            return resultSet.getInt("count");
+	        }
+	    }
+
+	    return 0; 
+	}
+
+	
+	public void inserirNotificacao(int idAluno, int idMateria) throws SQLException {
+	    String materia = obterNomeMateriaPorId(idMateria);
+	    notificacoes.computeIfAbsent(idAluno, k -> new ArrayList<>()).add(materia);
+	    String sql = "INSERT INTO notificacao (id_aluno, nome_materia) VALUES (?, ?)";
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setInt(1, idAluno);
+	        stmt.setString(2, materia);
+	        stmt.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        // Lidar com a exceção conforme necessário
+	    }
+	}
+
 
     private String obterNomeMateriaPorId(int idMateria) {
 		String sql = "SELECT nome_materia FROM materia WHERE id_materia =?";

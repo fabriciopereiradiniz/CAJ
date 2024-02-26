@@ -21,7 +21,7 @@ public class MyButton extends JButton {
 
     public MyButton() {
         // Inicialize as cores
-        setColor(Color.WHITE);
+        setColor(Color.decode("#e3e3e3"));
         colorOver = new Color(217, 217, 217);
         colorClick = Color.decode("#3995f7");
         borderColor = new Color(30, 136, 56);
@@ -52,7 +52,7 @@ public class MyButton extends JButton {
                 if (over) {
                     setBackground(colorOver);
                 } else {
-                    setBackground(color);
+                    setBackground(Color.decode("#e3e3e3"));
                 }
             }
         });
