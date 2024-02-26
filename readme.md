@@ -1,6 +1,6 @@
 # Controle acadêmico em Java (CAJ)
 
-| ![instruction_process](https://i.imgur.com/1jZRPKp.gif) | Este projeto foi realizado para a matéria de "Programação orientada a objetos", caso queira ver a representação de classes UML clique [aqui](./relatorio.pdf). |
+| ![instruction_process](https://i.imgur.com/1jZRPKp.gif) | Este projeto foi realizado para a matéria de "Programação orientada a objetos", caso queira ver a representação em diagrama da DB clique [aqui](./Diagrama_DB.jpg). |
 |---|---|
 
 ## Compilação e execucação do programa
