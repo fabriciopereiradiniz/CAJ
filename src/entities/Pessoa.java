@@ -12,7 +12,6 @@ public class Pessoa {
         this.materias = new ArrayList<>();
     }
 
-    // Getters and setters
     public String getNome() {
         return nome;
     }

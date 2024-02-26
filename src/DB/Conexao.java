@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Conexao {
-	public String loginAutenticado; // Variavel pública para armazenar o login autenticado
-	public int idAluno; // Variavel pública para armazenar o login autenticado
+	public String loginAutenticado;
+	public int idAluno;
 	private String databaseURL;
 	private String user;
 	private String password;
@@ -626,7 +626,6 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 	        stmt.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	        // Lidar com a exceção conforme necessário
 	    }
 	}
 
@@ -658,7 +657,6 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			// Lidar com a exceção conforme necessário
 		}
 	
 		// Retorna null se não encontrar nenhuma matéria para o id_aluno
@@ -684,7 +682,6 @@ public boolean verificarLoginExistente(String login) throws SQLException {
 			System.out.println("Notificações deletadas para o id_aluno: " + idAluno);
 		} catch (SQLException e) {
 			e.printStackTrace();
-			// Lidar com a exceção conforme necessário
 		}
 	}
 
