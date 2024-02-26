@@ -1,6 +1,6 @@
 # Controle acadêmico em Java (CAJ)
 
-| ![instruction_process](https://i.imgur.com/1jZRPKp.gif) | Este projeto foi realizado para a matéria de "Programação orientada a objetos", caso queira ver a representação em diagrama da DB clique [aqui](./Diagrama Banco.png). |
+| ![instruction_process](https://i.imgur.com/1jZRPKp.gif) | Este projeto foi realizado para a matéria de "Programação orientada a objetos", caso queira ver a representação em diagrama da DB clique [aqui](./Diagrama_Banco.png). |
 |---|---|
 
 ## Compilação e execucação do programa
